@@ -1,71 +1,32 @@
-global_arguments:
-   aws_default_region: eu-west-1
 labels:
    general: 
      environment: dev
      purpose: test
    infrastructure:
-     cloud: aws
-     product: rds
-     app_tier: database
+     cloud: do
 selectors:
-   vpc_info:
-     labels:
-       car: bmw
-       model: 320i
+   ssh_key_info:
+     match_labels:
+       cloud: do
        environment: dev
-       app_tier: networking
-     keys:
-       provider: aws
-       region: eu-west-1
-     parameters:
+     match_keys:
+       provider: do
+     match_params:
        must_exists: True
-       resource_type: vpc
-   sg_info:
-     labels:
-       car: bmw
-       model: 320i
-       environment: dev
-       app_tier: networking
-     keys:
-       provider: aws
-       region: eu-west-1
-       name: database
-     parameters:
-       must_be_one: True
-       resource_type: security_group
-   subnet_info:
-     labels:
-       car: bmw
-       model: 320i
-       environment: dev
-       app_tier: networking
-     keys:
-       provider: aws
-       region: eu-west-1
-       name: private
-     parameters:
-       resource_type: subnet
+       resource_type: ssh_public_key
 infrastructure:
-   rds:
-       stack_name: elasticdev:::aws_rds
+   jenkins-do:
+       stack_name: elasticdev:::jenkins-on-do
        arguments:
-          vpc_name: selector:::vpc_info::name
-          sg_id: selector:::sg_info::sg_id
-          subnet_ids: selector:::subnet_info::subnet_id:csv
-          rds_name: eval-ed-rds
-          allocated_storage: 14
-          publish_creds: True
-          db_name: app
+          ssh_key_id: selector:::ssh_key_info::id
+          name: jenkins-do
+          region: NYC1
+          size: s-1vcpu-2gb
        labels:
          - general
          - infrastructure
-       selectors:
-         - vpc_info
-         - sg_info
-         - subnet_info
        credentials:
-           - reference: eval-ed-iam
+           - reference: do-token
              orchestration: true
-destroy:
-   stack_name: elasticdev:::ed_core::callback_delete
+       selectors:
+         - ssh_key_info
